@@ -1,8 +1,8 @@
 <?php
 /*
 	Plugin Name: WC Vendors Vendor List Widget
-	Description: Adds a widget containing a dropdown of all WC Vendors vendors
-	Version: 1.0.0
+	Description: Adds a widget containing a list of all WC Vendors vendors
+	Version: 1.1.0
 	Author: <a href="https://github.com/lkarinja">Leejae Karinja</a>
 	License: GPL2
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,14 +65,21 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	public function widget($args, $instance)
 	{
 		$title = apply_filters('widget_title', $instance['title']);
+		$type = $instance['type'];
 
 		echo $args['before_widget'];
 		if(!empty($title)){
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
 
-		// Display the dropdown of Vendors
-		echo $this->get_vendor_list();
+		// Display the list of Vendors as a Dropdown
+		if($type == 'Dropdown'){
+			echo $this->get_vendor_list_as_dropdown();
+		}
+		// Display the list of Vendors as an Unordered List
+		if($type == 'List'){
+			echo $this->get_vendor_list_as_list();
+		}
 
 		echo $args['after_widget'];
 	}
@@ -87,11 +94,37 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		}else{
 			$title = __('Vendors', 'wc_vendors_vendor_list_widget');
 		}
+
+		if(isset($instance['type'])){
+			$type = $instance['type'];
+		}else{
+			$type = __('Dropdown', 'wc_vendors_vendor_list_widget');
+		}
+
 		?>
 
 		<p>
 			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label>
-			<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" />
+			<input class="widefat"
+				id="<?php echo $this->get_field_id('title'); ?>"
+				name="<?php echo $this->get_field_name('title'); ?>"
+				type="text"
+				value="<?php echo esc_attr($title); ?>" />
+		</p>
+
+		<p>
+			<label for="<?php echo $this->get_field_id('type'); ?>"><?php _e('Type:'); ?></label>
+			<select class='widefat'
+				id="<?php echo $this->get_field_id('type'); ?>"
+				name="<?php echo $this->get_field_name('type'); ?>"
+				type="text">
+				<option value='Dropdown'<?php echo ($type=='Dropdown')?'selected':''; ?>>
+					Dropdown
+				</option>
+				<option value='List'<?php echo ($type=='List')?'selected':''; ?>>
+					List
+				</option>
+			</select>
 		</p>
 
 		<?php
@@ -104,6 +137,7 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	{
 		$instance = array();
 		$instance['title'] = (!empty($new_instance['title'])) ? strip_tags($new_instance['title']) : '';
+		$instance['type'] = (!empty($new_instance['type'])) ? strip_tags($new_instance['type']) : '';
 		return $instance;
 	}
 
@@ -114,7 +148,7 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	 * Modified By: Leejae Karinja
 	 * License: GPL2
 	 */
-	public function get_vendor_list()
+	public function get_vendor_list_as_dropdown()
 	{
 		$html = '';
 
@@ -141,6 +175,42 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		}
 
 		$html .= '</select>';
+
+		return $html; 
+	}
+
+	/**
+	 * Gets an unordered list of WC Vendors vendors
+	 *
+	 * Original Author: WC Vendors (Jamie Madden http://github.com/digitalchild)
+	 * Modified By: Leejae Karinja
+	 * License: GPL2
+	 */
+	public function get_vendor_list_as_list()
+	{
+		$html = '';
+
+		// Arguments for DB Query
+		$vendor_total_args = array(
+			'role' => 'vendor',
+			'order' => 'ASC',
+		);
+
+		// Query the WordPress Database for all Vendors
+		$vendor_query = New WP_User_Query($vendor_total_args);
+		$vendors = $vendor_query->get_results();
+
+		// Create HTML unordered list with redirects to Vendor Pages
+		$html .= '<ul>';
+
+		// For all vendors, add their display name to the unordered list and a link to their shop page
+		foreach($vendors as $vendor){
+			$html .= '<li><a href="' . WCV_Vendors::get_vendor_shop_page($vendor->ID) . '">';
+			$html .= $vendor->display_name;
+			$html .= '</a></li>';
+		}
+
+		$html .= '</ul>';
 
 		return $html; 
 	}
