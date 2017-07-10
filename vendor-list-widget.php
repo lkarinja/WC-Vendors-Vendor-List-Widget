@@ -131,7 +131,7 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		// Create HTML dropdown list with redirects to Vendor Pages
 		$html .= '<select onChange="window.location.href=this.value">';
 
-		$html .= '<option>--Select Vendor--</option>';
+		$html .= '<option value="javascript:void(0)" selected="selected">--Select Vendor--</option>';
 
 		// For all vendors, add their display name to the dropdown list and a link to their shop page
 		foreach($vendors as $vendor){
