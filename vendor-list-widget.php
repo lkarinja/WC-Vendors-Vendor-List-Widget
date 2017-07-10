@@ -1,8 +1,8 @@
 <?php
 /*
 	Plugin Name: WC Vendors Vendor List Widget
-	Description: Adds a widget containing a list of all WC Vendors vendors
-	Version: 1.1.0
+	Description: Adds a widget and shortcode containing a list of all WC Vendors vendors
+	Version: 1.2.0
 	Author: <a href="https://github.com/lkarinja">Leejae Karinja</a>
 	License: GPL2
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,6 +50,9 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	 */
 	function __construct()
 	{
+		// Add Shortcode
+		add_shortcode('wc_vendors_vendor_list', array($this, 'wc_vendors_vendor_list_shortcode'));
+		// Add Widget
 		parent::__construct(
 			'wc_vendors_vendor_list_widget',
 			__('WC Vendors Vendor List', 'wc_vendors_vendor_list_widget'),
@@ -213,5 +216,23 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		$html .= '</ul>';
 
 		return $html; 
+	}
+
+	/**
+	 * Gets a list of WC Vendors vendors
+	 */
+	public function wc_vendors_vendor_list_shortcode($atts){
+		extract(shortcode_atts(array(
+			'type' => 'List',
+		), $atts));
+
+		// Display the list of Vendors as a Dropdown
+		if($type == 'Dropdown'){
+			return $this->get_vendor_list_as_dropdown();
+		}
+		// Display the list of Vendors as an Unordered List
+		if($type == 'List'){
+			return $this->get_vendor_list_as_list();
+		}
 	}
 }
