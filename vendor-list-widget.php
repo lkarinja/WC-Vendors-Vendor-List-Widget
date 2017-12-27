@@ -2,7 +2,7 @@
 /*
 	Plugin Name: WC Vendors Vendor List Widget
 	Description: Adds a widget and shortcode containing a list of all WC Vendors vendors
-	Version: 1.2.0
+	Version: 2.0.0
 	Author: <a href="https://github.com/lkarinja">Leejae Karinja</a>
 	License: GPL2
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,16 +71,19 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		$type = $instance['type'];
 
 		echo $args['before_widget'];
-		if(!empty($title)){
+		if(!empty($title))
+		{
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
 
 		// Display the list of Vendors as a Dropdown
-		if($type == 'Dropdown'){
+		if($type == 'Dropdown')
+		{
 			echo $this->get_vendor_list_as_dropdown();
 		}
 		// Display the list of Vendors as an Unordered List
-		if($type == 'List'){
+		if($type == 'List')
+		{
 			echo $this->get_vendor_list_as_list();
 		}
 
@@ -92,13 +95,15 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	 */
 	public function form($instance)
 	{
-		if(isset($instance['title'])){
+		if(isset($instance['title']))
+		{
 			$title = $instance['title'];
 		}else{
 			$title = __('Vendors', 'wc_vendors_vendor_list_widget');
 		}
 
-		if(isset($instance['type'])){
+		if(isset($instance['type']))
+		{
 			$type = $instance['type'];
 		}else{
 			$type = __('Dropdown', 'wc_vendors_vendor_list_widget');
@@ -171,10 +176,16 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		$html .= '<option value="javascript:void(0)" selected="selected">--Select Vendor--</option>';
 
 		// For all vendors, add their display name to the dropdown list and a link to their shop page
-		foreach($vendors as $vendor){
-			$html .= '<option value="' . WCV_Vendors::get_vendor_shop_page($vendor->ID) . '">';
-			$html .= $vendor->display_name;
-			$html .= '</option>';
+		foreach($vendors as $vendor)
+		{
+			// If the vendor has any products in stock
+			if($this->vendor_has_products($vendor->ID))
+			{
+				// Add them to the dropdown
+				$html .= '<option value="' . WCV_Vendors::get_vendor_shop_page($vendor->ID) . '">';
+				$html .= $vendor->display_name;
+				$html .= '</option>';
+			}
 		}
 
 		$html .= '</select>';
@@ -207,10 +218,16 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 		$html .= '<ul>';
 
 		// For all vendors, add their display name to the unordered list and a link to their shop page
-		foreach($vendors as $vendor){
-			$html .= '<li><a href="' . WCV_Vendors::get_vendor_shop_page($vendor->ID) . '">';
-			$html .= $vendor->display_name;
-			$html .= '</a></li>';
+		foreach($vendors as $vendor)
+		{
+			// If the vendor has any products in stock
+			if($this->vendor_has_products($vendor->ID))
+			{
+				// Add them to the list
+				$html .= '<li><a href="' . WCV_Vendors::get_vendor_shop_page($vendor->ID) . '">';
+				$html .= $vendor->display_name;
+				$html .= '</a></li>';
+			}
 		}
 
 		$html .= '</ul>';
@@ -219,19 +236,48 @@ class WC_Vendors_Vendor_List_Widget extends WP_Widget
 	}
 
 	/**
+	 * Determines if a vendor has any products in stock
+	 */
+	public function vendor_has_products($vendor_id)
+	{
+		// Arguments for DB Query
+		$vendor_products_args = array(
+			'post_type' => 'product',
+			'post_status' => 'publish',
+			'author' => $vendor_id,
+			'posts_per_page' => -1,
+			'meta_query' => array(
+				array(
+					'key' => '_stock_status',
+					'value' => 'instock'
+				)
+			)
+		);
+
+		// Query the WordPress Database for products in stock for a vendor
+		$products_query = new WP_Query($vendor_products_args);
+
+		// Return if there were any products in stock for the vendor
+		return $products_query->have_posts();
+	}
+
+	/**
 	 * Gets a list of WC Vendors vendors
 	 */
-	public function wc_vendors_vendor_list_shortcode($atts){
+	public function wc_vendors_vendor_list_shortcode($atts)
+	{
 		extract(shortcode_atts(array(
 			'type' => 'List',
 		), $atts));
 
 		// Display the list of Vendors as a Dropdown
-		if($type == 'Dropdown'){
+		if($type == 'Dropdown')
+		{
 			return $this->get_vendor_list_as_dropdown();
 		}
 		// Display the list of Vendors as an Unordered List
-		if($type == 'List'){
+		if($type == 'List')
+		{
 			return $this->get_vendor_list_as_list();
 		}
 	}
